@@ -38,11 +38,11 @@ export const MapRadarView: React.FC = () => {
     return drivers.filter(d => d.type === selectedCategory);
   }, [drivers, selectedCategory]);
 
-  // Smoothly zoom in and center directly on the user's location
+  // Smoothly zoom in and center in the VISIBLE viewport (above the bottom sheet)
   const handleRecenter = useCallback(() => {
     mapRef.current?.animateToRegion(
       {
-        latitude: DEFAULT_REGION.latitude,
+        latitude: DEFAULT_REGION.latitude - 0.0048, // Offset so marker is centered in open visible map
         longitude: DEFAULT_REGION.longitude,
         latitudeDelta: 0.015,
         longitudeDelta: 0.015,
@@ -51,16 +51,16 @@ export const MapRadarView: React.FC = () => {
     );
   }, []);
 
-  // When a marker is pressed, center on it and update store
+  // When a marker is pressed, center on it in the visible space
   const handleSelectDriver = useCallback(
     (driver: Driver) => {
       selectDriver(driver.id);
       mapRef.current?.animateToRegion(
         {
-          latitude: driver.coordinate.latitude - 0.005, // Slight offset for bottom sheet clearance
+          latitude: driver.coordinate.latitude - 0.0048,
           longitude: driver.coordinate.longitude,
-          latitudeDelta: 0.025,
-          longitudeDelta: 0.025,
+          latitudeDelta: 0.015,
+          longitudeDelta: 0.015,
         },
         500
       );
@@ -68,7 +68,7 @@ export const MapRadarView: React.FC = () => {
     [selectDriver]
   );
 
-  // When filter changes, smoothly frame all matching drivers
+  // When filter changes, smoothly frame all matching drivers in the visible area
   useEffect(() => {
     if (filteredDrivers.length > 0 && mapRef.current) {
       const coordinates = filteredDrivers.map(d => d.coordinate);
@@ -79,7 +79,8 @@ export const MapRadarView: React.FC = () => {
 
       const timer = setTimeout(() => {
         mapRef.current?.fitToCoordinates(coordinates, {
-          edgePadding: { top: 100, right: 60, bottom: 280, left: 60 },
+          // Bottom padding 400px ensures markers stay above the bottom sheet!
+          edgePadding: { top: 120, right: 50, bottom: 400, left: 50 },
           animated: true,
         });
       }, 100);
@@ -93,7 +94,12 @@ export const MapRadarView: React.FC = () => {
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
-        initialRegion={DEFAULT_REGION}
+        initialRegion={{
+          latitude: DEFAULT_REGION.latitude - 0.0048,
+          longitude: DEFAULT_REGION.longitude,
+          latitudeDelta: DEFAULT_REGION.latitudeDelta,
+          longitudeDelta: DEFAULT_REGION.longitudeDelta,
+        }}
         showsCompass={false}
         showsScale={false}
         showsUserLocation={false}
