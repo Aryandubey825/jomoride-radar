@@ -1,5 +1,5 @@
-import React, { memo, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Pressable } from 'react-native';
+import React, { memo } from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Marker } from 'react-native-maps';
 import Svg, { Path } from 'react-native-svg';
 import { Driver } from '../../../types/driver';
@@ -29,29 +29,6 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
   isSelected,
   onSelect,
 }) => {
-  // CRITICAL 60FPS OPTIMIZATION:
-  // Render tracksViewChanges=true initially, then disable after 250ms.
-  // This turns the marker into a static hardware-accelerated texture on iOS MapKit!
-  const [tracksViewChanges, setTracksViewChanges] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setTracksViewChanges(false);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // When selection changes, briefly allow view changes to reflect active highlight
-  useEffect(() => {
-    setTracksViewChanges(true);
-    const timer = setTimeout(() => {
-      setTracksViewChanges(false);
-    }, 200);
-
-    return () => clearTimeout(timer);
-  }, [isSelected]);
-
   const isPremium = driver.type === 'premium';
   const accentColor = isPremium ? COLORS.premiumGold : COLORS.primary;
 
@@ -60,7 +37,7 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
       coordinate={driver.coordinate}
       anchor={{ x: 0.5, y: 1 }}
       onPress={() => onSelect(driver)}
-      tracksViewChanges={tracksViewChanges}
+      tracksViewChanges={false}
     >
       <View style={[styles.container, isSelected && styles.selectedContainer]}>
         {/* Rating or Tier Badge */}
@@ -78,7 +55,10 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
             isSelected && { borderColor: '#FFFFFF', borderWidth: 2.5 },
           ]}
         >
-          <Image source={{ uri: driver.avatar }} style={styles.avatarImage} />
+          <Image
+            source={{ uri: driver.avatar }}
+            style={styles.avatarImage}
+          />
 
           {/* Mini Vehicle Badge at bottom-right of avatar */}
           <View style={[styles.carBadge, { backgroundColor: accentColor }]}>
@@ -93,7 +73,7 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
   );
 };
 
-// Memoize marker to avoid unnecessary re-renders when parent Map renders
+// Pure memoized marker - prevents re-renders when other markers update
 export const DriverMarker = memo(DriverMarkerComponent, (prevProps, nextProps) => {
   return (
     prevProps.driver.id === nextProps.driver.id &&

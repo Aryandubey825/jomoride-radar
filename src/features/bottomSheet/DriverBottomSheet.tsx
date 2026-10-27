@@ -20,9 +20,13 @@ export const DriverBottomSheet: React.FC = () => {
   const selectedDriverId = useDriverStore(state => state.selectedDriverId);
   const setCategory = useDriverStore(state => state.setCategory);
   const selectDriver = useDriverStore(state => state.selectDriver);
-  const getFilteredDrivers = useDriverStore(state => state.getFilteredDrivers);
 
-  const filteredDrivers = getFilteredDrivers();
+  // Reactive filtered drivers computation
+  const filteredDrivers = useMemo(() => {
+    if (selectedCategory === 'all') return drivers;
+    return drivers.filter(d => d.type === selectedCategory);
+  }, [drivers, selectedCategory]);
+
   const selectedDriver = drivers.find(d => d.id === selectedDriverId);
 
   // Compute driver counts dynamically

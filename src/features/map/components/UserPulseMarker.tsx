@@ -1,13 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Marker } from 'react-native-maps';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
 import { Coordinate } from '../../../types/driver';
 import { COLORS } from '../../../theme/colors';
 
@@ -16,33 +9,16 @@ interface UserPulseMarkerProps {
 }
 
 export const UserPulseMarker: React.FC<UserPulseMarkerProps> = ({ coordinate }) => {
-  const pulseScale = useSharedValue(1);
-  const pulseOpacity = useSharedValue(0.7);
-
-  useEffect(() => {
-    pulseScale.value = withRepeat(
-      withTiming(2.4, { duration: 1800, easing: Easing.out(Easing.ease) }),
-      -1,
-      false
-    );
-    pulseOpacity.value = withRepeat(
-      withTiming(0, { duration: 1800, easing: Easing.out(Easing.ease) }),
-      -1,
-      false
-    );
-  }, [pulseScale, pulseOpacity]);
-
-  const animatedPulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-    opacity: pulseOpacity.value,
-  }));
-
   return (
-    <Marker coordinate={coordinate} anchor={{ x: 0.5, y: 0.5 }}>
+    <Marker
+      coordinate={coordinate}
+      anchor={{ x: 0.5, y: 0.5 }}
+      tracksViewChanges={false}
+    >
       <View style={styles.container}>
-        {/* Radar Wave Ring */}
-        <Animated.View style={[styles.pulseRing, animatedPulseStyle]} />
-        {/* Core Dot with White Halo */}
+        {/* Radar Wave Halo */}
+        <View style={styles.radarHalo} />
+        {/* Core Dot with White Border */}
         <View style={styles.outerRing}>
           <View style={styles.coreDot} />
         </View>
@@ -58,26 +34,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pulseRing: {
+  radarHalo: {
     position: 'absolute',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     backgroundColor: COLORS.primaryMuted,
     borderWidth: 1.5,
-    borderColor: COLORS.primary,
+    borderColor: 'rgba(0, 229, 255, 0.4)',
   },
   outerRing: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 6,
+    shadowOpacity: 0.9,
+    shadowRadius: 8,
     elevation: 8,
   },
   coreDot: {

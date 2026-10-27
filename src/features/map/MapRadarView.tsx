@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import MapView, { PROVIDER_DEFAULT } from 'react-native-maps';
 import Svg, { Path } from 'react-native-svg';
@@ -27,10 +27,15 @@ export const MapRadarView: React.FC = () => {
   const mapRef = useRef<MapView>(null);
 
   // Zustand selectors (atomic subscriptions for performance)
-  const filteredDrivers = useDriverStore(state => state.getFilteredDrivers());
+  const drivers = useDriverStore(state => state.drivers);
   const selectedDriverId = useDriverStore(state => state.selectedDriverId);
   const selectedCategory = useDriverStore(state => state.selectedCategory);
   const selectDriver = useDriverStore(state => state.selectDriver);
+
+  const filteredDrivers = useMemo(() => {
+    if (selectedCategory === 'all') return drivers;
+    return drivers.filter(d => d.type === selectedCategory);
+  }, [drivers, selectedCategory]);
 
   // Smoothly center the map on the user's location
   const handleRecenter = useCallback(() => {
@@ -58,16 +63,19 @@ export const MapRadarView: React.FC = () => {
   useEffect(() => {
     if (filteredDrivers.length > 0 && mapRef.current) {
       const coordinates = filteredDrivers.map(d => d.coordinate);
-      // Include user coordinate in the bounding frame
       coordinates.push({
         latitude: DEFAULT_REGION.latitude,
         longitude: DEFAULT_REGION.longitude,
       });
 
-      mapRef.current.fitToCoordinates(coordinates, {
-        edgePadding: { top: 100, right: 60, bottom: 280, left: 60 },
-        animated: true,
-      });
+      const timer = setTimeout(() => {
+        mapRef.current?.fitToCoordinates(coordinates, {
+          edgePadding: { top: 100, right: 60, bottom: 280, left: 60 },
+          animated: true,
+        });
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
   }, [selectedCategory]);
 
@@ -75,10 +83,8 @@ export const MapRadarView: React.FC = () => {
     <View style={styles.container}>
       <MapView
         ref={mapRef}
-        provider={PROVIDER_DEFAULT}
         style={StyleSheet.absoluteFill}
         initialRegion={DEFAULT_REGION}
-        customMapStyle={MAP_DARK_STYLE}
         showsCompass={false}
         showsScale={false}
         showsUserLocation={false}
@@ -125,7 +131,7 @@ export const MapRadarView: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFill,
+    flex: 1,
   },
   radarBadge: {
     position: 'absolute',
