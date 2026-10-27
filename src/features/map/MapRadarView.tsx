@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
-import MapView, { PROVIDER_DEFAULT } from 'react-native-maps';
+import MapView, { Polyline } from 'react-native-maps';
 import Svg, { Path } from 'react-native-svg';
 import { useDriverStore } from '../../store/useDriverStore';
 import { DEFAULT_REGION } from '../../api/mockDrivers';
@@ -32,6 +32,8 @@ export const MapRadarView: React.FC = () => {
   const selectedDriverId = useDriverStore(state => state.selectedDriverId);
   const selectedCategory = useDriverStore(state => state.selectedCategory);
   const selectDriver = useDriverStore(state => state.selectDriver);
+  const bookingStatus = useDriverStore(state => state.bookingStatus);
+  const matchedDriver = useDriverStore(state => state.matchedDriver);
 
   const filteredDrivers = useMemo(() => {
     if (selectedCategory === 'all') return drivers;
@@ -89,6 +91,25 @@ export const MapRadarView: React.FC = () => {
     }
   }, [selectedCategory]);
 
+  // When chauffeur is confirmed, smoothly frame both the chauffeur and the user!
+  useEffect(() => {
+    if (bookingStatus === 'confirmed' && matchedDriver && mapRef.current) {
+      mapRef.current.fitToCoordinates(
+        [
+          matchedDriver.coordinate,
+          {
+            latitude: DEFAULT_REGION.latitude,
+            longitude: DEFAULT_REGION.longitude,
+          },
+        ],
+        {
+          edgePadding: { top: 120, right: 60, bottom: 420, left: 60 },
+          animated: true,
+        }
+      );
+    }
+  }, [bookingStatus, matchedDriver]);
+
   return (
     <View style={styles.container}>
       <MapView
@@ -123,6 +144,25 @@ export const MapRadarView: React.FC = () => {
             onSelect={handleSelectDriver}
           />
         ))}
+
+        {/* Live Route Polyline connecting matched chauffeur to user */}
+        {bookingStatus === 'confirmed' && matchedDriver && (
+          <Polyline
+            coordinates={[
+              {
+                latitude: matchedDriver.coordinate.latitude,
+                longitude: matchedDriver.coordinate.longitude,
+              },
+              {
+                latitude: DEFAULT_REGION.latitude,
+                longitude: DEFAULT_REGION.longitude,
+              },
+            ]}
+            strokeColor="#00E5FF"
+            strokeWidth={3.5}
+            lineDashPattern={[0]}
+          />
+        )}
       </MapView>
 
       {/* Floating Re-center Button (Top-Right) */}
