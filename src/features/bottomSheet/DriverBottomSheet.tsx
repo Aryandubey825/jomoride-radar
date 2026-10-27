@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Switch } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import Animated, { FadeInDown, FadeOutUp } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { useDriverStore } from '../../store/useDriverStore';
 import { COLORS } from '../../theme/colors';
@@ -20,7 +21,7 @@ const CheckCircleIcon = ({ color }: { color: string }) => (
 
 // Calendar Icon
 const CalendarIcon = ({ color }: { color: string }) => (
-  <Svg width={15} height={15} viewBox="0 0 24 24" fill="none">
+  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
     <Path
       d="M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zM16 2v4M8 2v4M3 10h18"
       stroke={color}
@@ -33,7 +34,7 @@ const CalendarIcon = ({ color }: { color: string }) => (
 
 export const DriverBottomSheet: React.FC = () => {
   // Snap points for the drawer
-  const snapPoints = useMemo(() => ['22%', '58%', '90%'], []);
+  const snapPoints = useMemo(() => ['22%', '60%', '92%'], []);
 
   // Store bindings
   const selectedCategory = useDriverStore(state => state.selectedCategory);
@@ -79,12 +80,17 @@ export const DriverBottomSheet: React.FC = () => {
     { hours: 24, label: '24 Hrs' },
   ];
 
-  const dates = ['Today, 28 Oct', 'Tomorrow, 29 Oct', 'Fri, 30 Oct'];
-  const times = ['09:00 AM', '02:00 PM', '07:00 PM', '10:00 PM'];
+  const dates = [
+    { key: 'today', day: 'Today', date: '28 Oct' },
+    { key: 'tomorrow', day: 'Tomorrow', date: '29 Oct' },
+    { key: 'friday', day: 'Friday', date: '30 Oct' },
+  ];
+
+  const times = ['09:00 AM', '02:00 PM', '06:30 PM', '09:00 PM'];
 
   return (
     <BottomSheet
-      index={1} // 58% default height
+      index={1} // 60% default height
       snapPoints={snapPoints}
       backgroundStyle={styles.bottomSheetBackground}
       handleIndicatorStyle={styles.handleIndicator}
@@ -99,61 +105,34 @@ export const DriverBottomSheet: React.FC = () => {
         {/* ======================================================== */}
         {bookingStatus === 'idle' && (
           <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.title}>Hire a Chauffeur for Your Car</Text>
-              <Text style={styles.subtitle}>Verified on-demand personal drivers</Text>
-            </View>
-
-            {/* Step 1: Clean Premium Toggle Card (Replaces 3 Buttons) */}
-            <TouchableOpacity
-              style={[
-                styles.toggleCard,
-                isPremium && styles.toggleCardActive,
-                { borderColor: isPremium ? COLORS.premiumGold : COLORS.surfaceBorder },
-              ]}
-              onPress={togglePremium}
-              activeOpacity={0.85}
-            >
-              <View style={styles.toggleInfo}>
-                <View style={styles.tierTitleRow}>
-                  <Text style={[styles.tierTitle, isPremium && { color: COLORS.premiumGold }]}>
-                    {isPremium ? '★ VIP Premium Chauffeur' : 'Standard Verified Driver'}
-                  </Text>
-                  <View
-                    style={[
-                      styles.rateTag,
-                      { backgroundColor: isPremium ? '#2A2207' : '#102231' },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.rateTagText,
-                        { color: isPremium ? COLORS.premiumGold : COLORS.primary },
-                      ]}
-                    >
-                      ${hourlyRate}/hr
-                    </Text>
-                  </View>
-                </View>
-                <Text style={styles.tierDescription}>
-                  {isPremium
-                    ? 'Certified suited chauffeur for luxury cars & EVs'
-                    : 'Experienced driver for daily commute & sedans'}
-                </Text>
+            {/* Header with Minimal Premium Toggle */}
+            <View style={styles.headerRow}>
+              <View>
+                <Text style={styles.title}>Hire a Chauffeur</Text>
+                <Text style={styles.subtitle}>Verified personal drivers on demand</Text>
               </View>
 
-              {/* iOS Style Switch */}
-              <Switch
-                value={isPremium}
-                onValueChange={togglePremium}
-                trackColor={{ false: '#262D3D', true: COLORS.premiumGold }}
-                thumbColor={isPremium ? '#000000' : '#FFFFFF'}
-                ios_backgroundColor="#262D3D"
-              />
-            </TouchableOpacity>
+              {/* Minimal Clean Premium Toggle */}
+              <View style={styles.minimalToggleContainer}>
+                <View style={styles.toggleLabels}>
+                  <Text style={[styles.premiumText, isPremium && styles.premiumTextActive]}>
+                    ★ Premium
+                  </Text>
+                  <Text style={styles.rateSubtext}>
+                    {isPremium ? '$48/h' : '$22/h'}
+                  </Text>
+                </View>
+                <Switch
+                  value={isPremium}
+                  onValueChange={togglePremium}
+                  trackColor={{ false: '#262D3D', true: COLORS.premiumGold }}
+                  thumbColor={isPremium ? '#000000' : '#FFFFFF'}
+                  ios_backgroundColor="#262D3D"
+                />
+              </View>
+            </View>
 
-            {/* Step 2: Timing Selector (Now vs Schedule) */}
+            {/* Timing Selector (Now vs Schedule) */}
             <View style={styles.sectionRow}>
               <Text style={styles.sectionLabel}>WHEN TO HIRE</Text>
               <View style={styles.timingPills}>
@@ -163,6 +142,7 @@ export const DriverBottomSheet: React.FC = () => {
                     bookingMode === 'now' && styles.timingPillActive,
                   ]}
                   onPress={() => setBookingMode('now')}
+                  activeOpacity={0.8}
                 >
                   <Text
                     style={[
@@ -180,6 +160,7 @@ export const DriverBottomSheet: React.FC = () => {
                     bookingMode === 'schedule' && styles.timingPillActive,
                   ]}
                   onPress={() => setBookingMode('schedule')}
+                  activeOpacity={0.8}
                 >
                   <View style={styles.scheduleRow}>
                     <CalendarIcon color={bookingMode === 'schedule' ? '#00E5FF' : COLORS.textSecondary} />
@@ -197,50 +178,60 @@ export const DriverBottomSheet: React.FC = () => {
               </View>
             </View>
 
-            {/* Smooth Expandable Date & Time Picker (Only when Schedule is selected!) */}
+            {/* Smooth Reanimated Date & Time Expandable Picker */}
             {bookingMode === 'schedule' && (
-              <View style={styles.scheduleAccordion}>
-                {/* Select Date */}
+              <Animated.View
+                entering={FadeInDown.duration(280)}
+                exiting={FadeOutUp.duration(200)}
+                style={styles.scheduleContainer}
+              >
+                {/* Date Selection Cards */}
                 <Text style={styles.subSectionLabel}>SELECT DATE</Text>
-                <View style={styles.chipRow}>
-                  {dates.map(date => {
-                    const isSelected = scheduledDate === date;
+                <View style={styles.dateCardsRow}>
+                  {dates.map(item => {
+                    const label = `${item.day}, ${item.date}`;
+                    const isSelected = scheduledDate === label;
                     return (
                       <TouchableOpacity
-                        key={date}
-                        style={[styles.chip, isSelected && styles.chipActive]}
-                        onPress={() => setScheduledDate(date)}
+                        key={item.key}
+                        style={[styles.dateCard, isSelected && styles.dateCardActive]}
+                        onPress={() => setScheduledDate(label)}
+                        activeOpacity={0.8}
                       >
-                        <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
-                          {date}
+                        <Text style={[styles.dateDayText, isSelected && styles.dateDayTextActive]}>
+                          {item.day}
+                        </Text>
+                        <Text style={[styles.dateNumText, isSelected && styles.dateNumTextActive]}>
+                          {item.date}
                         </Text>
                       </TouchableOpacity>
                     );
                   })}
                 </View>
 
-                {/* Select Time Slot */}
-                <Text style={[styles.subSectionLabel, { marginTop: 10 }]}>PICKUP TIME</Text>
-                <View style={styles.chipRow}>
+                {/* Time Slots Selection */}
+                <Text style={[styles.subSectionLabel, { marginTop: 12 }]}>PICKUP TIME</Text>
+                <View style={styles.timePillsRow}>
                   {times.map(time => {
                     const isSelected = scheduledTime === time;
                     return (
                       <TouchableOpacity
                         key={time}
-                        style={[styles.chip, isSelected && styles.chipActive]}
+                        style={[styles.timePill, isSelected && styles.timePillActive]}
                         onPress={() => setScheduledTime(time)}
+                        activeOpacity={0.8}
                       >
-                        <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
+                        <Text style={[styles.timePillText, isSelected && styles.timePillTextActive]}>
                           {time}
                         </Text>
                       </TouchableOpacity>
                     );
                   })}
                 </View>
-              </View>
+              </Animated.View>
             )}
 
-            {/* Step 3: Duration Selection (Hours) */}
+            {/* Duty Duration Selection (Hours) */}
             <View style={styles.sectionRow}>
               <Text style={styles.sectionLabel}>DUTY DURATION</Text>
               <View style={styles.durationPills}>
@@ -254,6 +245,7 @@ export const DriverBottomSheet: React.FC = () => {
                         isSelected && styles.durationPillActive,
                       ]}
                       onPress={() => setDuration(d.hours)}
+                      activeOpacity={0.8}
                     >
                       <Text
                         style={[
@@ -289,7 +281,7 @@ export const DriverBottomSheet: React.FC = () => {
               <View style={styles.perkRow}>
                 <CheckCircleIcon color={COLORS.onlineGreen} />
                 <Text style={styles.perkText}>
-                  Includes car handover insurance & driver background verification
+                  Includes car handover insurance & background check
                 </Text>
               </View>
             </View>
@@ -430,8 +422,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 4,
   },
-  header: {
-    marginBottom: 12,
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.06)',
   },
   title: {
     fontSize: 18,
@@ -444,47 +442,26 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 2,
   },
-  toggleCard: {
+  minimalToggleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.surfaceLight,
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    marginBottom: 14,
+    gap: 8,
   },
-  toggleCardActive: {
-    backgroundColor: 'rgba(255, 215, 0, 0.05)',
+  toggleLabels: {
+    alignItems: 'flex-end',
   },
-  toggleInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  tierTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 3,
-  },
-  tierTitle: {
-    fontSize: 14,
+  premiumText: {
+    fontSize: 13,
     fontWeight: '800',
-    color: COLORS.textPrimary,
-    marginRight: 8,
-  },
-  rateTag: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  rateTagText: {
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  tierDescription: {
-    fontSize: 11,
     color: COLORS.textSecondary,
-    lineHeight: 15,
+  },
+  premiumTextActive: {
+    color: COLORS.premiumGold,
+  },
+  rateSubtext: {
+    fontSize: 10,
+    color: COLORS.textMuted,
+    fontWeight: '700',
   },
   sectionRow: {
     marginBottom: 14,
@@ -502,8 +479,8 @@ const styles = StyleSheet.create({
   },
   timingPill: {
     flex: 1,
-    paddingVertical: 9,
-    borderRadius: 10,
+    paddingVertical: 10,
+    borderRadius: 12,
     backgroundColor: COLORS.surfaceLight,
     alignItems: 'center',
     borderWidth: 1,
@@ -524,46 +501,82 @@ const styles = StyleSheet.create({
   },
   timingLabelActive: {
     color: '#00E5FF',
-    fontWeight: '700',
+    fontWeight: '800',
   },
-  scheduleAccordion: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  scheduleContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 14,
     padding: 12,
-    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.06)',
     marginBottom: 14,
   },
   subSectionLabel: {
     fontSize: 9,
     fontWeight: '800',
     color: COLORS.textMuted,
-    letterSpacing: 0.7,
-    marginBottom: 6,
+    letterSpacing: 0.8,
+    marginBottom: 8,
   },
-  chipRow: {
+  dateCardsRow: {
     flexDirection: 'row',
-    gap: 6,
-    flexWrap: 'wrap',
+    gap: 8,
   },
-  chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+  dateCard: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    borderRadius: 10,
     backgroundColor: COLORS.surfaceLight,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: COLORS.surfaceBorder,
   },
-  chipActive: {
+  dateCardActive: {
     borderColor: '#00E5FF',
-    backgroundColor: 'rgba(0, 229, 255, 0.12)',
+    backgroundColor: 'rgba(0, 229, 255, 0.1)',
   },
-  chipText: {
-    fontSize: 10,
-    color: COLORS.textSecondary,
+  dateDayText: {
+    fontSize: 11,
     fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginBottom: 2,
   },
-  chipTextActive: {
+  dateDayTextActive: {
+    color: '#00E5FF',
+    fontWeight: '800',
+  },
+  dateNumText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+  },
+  dateNumTextActive: {
+    color: '#00E5FF',
+  },
+  timePillsRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  timePill: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.surfaceLight,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+  },
+  timePillActive: {
+    borderColor: '#00E5FF',
+    backgroundColor: 'rgba(0, 229, 255, 0.1)',
+  },
+  timePillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+  },
+  timePillTextActive: {
     color: '#00E5FF',
     fontWeight: '800',
   },
