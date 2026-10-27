@@ -21,6 +21,7 @@ class SceneDelegate: RCTDefaultReactNativeFactoryDelegate, UIWindowSceneDelegate
     window = UIWindow(windowScene: windowScene)
     
     #if DEBUG
+    RCTDevLoadingViewSetEnabled(false)
     let devMenuConfiguration = RCTDevMenuConfiguration(
       devMenuEnabled: true,
       shakeGestureEnabled: true,
