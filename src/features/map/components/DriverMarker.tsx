@@ -1,12 +1,20 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { Marker } from 'react-native-maps';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { Driver } from '../../../types/driver';
 import { COLORS } from '../../../theme/colors';
 
 interface DriverMarkerProps {
   driver: Driver;
+  isVisible: boolean;
   isSelected: boolean;
   onSelect: (driver: Driver) => void;
 }
@@ -26,9 +34,38 @@ const CarIcon = ({ color }: { color: string }) => (
 
 const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
   driver,
+  isVisible,
   isSelected,
   onSelect,
 }) => {
+  // Native UI-thread shared values for smooth pop-up & pop-down spring physics
+  const scale = useSharedValue(isVisible ? 1 : 0);
+  const opacity = useSharedValue(isVisible ? 1 : 0);
+
+  useEffect(() => {
+    if (isVisible) {
+      // Elastic spring pop-up when becoming visible
+      scale.value = withSpring(1, {
+        damping: 12,
+        stiffness: 150,
+        mass: 0.7,
+      });
+      opacity.value = withTiming(1, { duration: 220 });
+    } else {
+      // Smooth shrink and fade away when filtered out
+      scale.value = withTiming(0, {
+        duration: 200,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      });
+      opacity.value = withTiming(0, { duration: 180 });
+    }
+  }, [isVisible]);
+
+  const animatedMarkerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
   const isPremium = driver.type === 'premium';
   const accentColor = isPremium ? COLORS.premiumGold : COLORS.primary;
 
@@ -36,10 +73,16 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
     <Marker
       coordinate={driver.coordinate}
       anchor={{ x: 0.5, y: 1 }}
-      onPress={() => onSelect(driver)}
+      onPress={() => isVisible && onSelect(driver)}
       tracksViewChanges={false}
     >
-      <View style={[styles.container, isSelected && styles.selectedContainer]}>
+      <Animated.View
+        style={[
+          styles.container,
+          isSelected && styles.selectedContainer,
+          animatedMarkerStyle,
+        ]}
+      >
         {/* Rating or Tier Badge */}
         <View style={[styles.badge, { backgroundColor: isPremium ? '#2A2207' : '#0B1C28' }]}>
           <Text style={[styles.badgeText, { color: accentColor }]}>
@@ -68,7 +111,7 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
 
         {/* Pin Triangle Pointer */}
         <View style={[styles.pointer, { borderTopColor: accentColor }]} />
-      </View>
+      </Animated.View>
     </Marker>
   );
 };
@@ -77,6 +120,7 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
 export const DriverMarker = memo(DriverMarkerComponent, (prevProps, nextProps) => {
   return (
     prevProps.driver.id === nextProps.driver.id &&
+    prevProps.isVisible === nextProps.isVisible &&
     prevProps.isSelected === nextProps.isSelected &&
     prevProps.driver.type === nextProps.driver.type &&
     prevProps.driver.coordinate.latitude === nextProps.driver.coordinate.latitude &&

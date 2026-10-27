@@ -107,11 +107,12 @@ export const MapRadarView: React.FC = () => {
           }}
         />
 
-        {/* 60FPS Filterable Driver Markers */}
-        {filteredDrivers.map(driver => (
+        {/* 60FPS Spring Animated Pop-up / Pop-down Driver Markers */}
+        {drivers.map(driver => (
           <DriverMarker
             key={driver.id}
             driver={driver}
+            isVisible={selectedCategory === 'all' || driver.type === selectedCategory}
             isSelected={driver.id === selectedDriverId}
             onSelect={handleSelectDriver}
           />
