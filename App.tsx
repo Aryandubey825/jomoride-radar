@@ -1,6 +1,9 @@
 import React from 'react';
-import { StyleSheet, StatusBar, View } from 'react-native';
+import { StyleSheet, StatusBar, View, LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+// Disable all floating warning banners on screen
+LogBox.ignoreAllLogs();
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { MapRadarView } from './src/features/map/MapRadarView';
 import { DriverBottomSheet } from './src/features/bottomSheet/DriverBottomSheet';
