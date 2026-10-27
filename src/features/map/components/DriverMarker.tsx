@@ -63,11 +63,11 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
     }
   }, [isVisible]);
 
-  // Selection spring animation (smoothly grows ~25% bigger with slight bounce)
+  // Selection spring animation (smoothly grows ~18% bigger with gentle bounce)
   useEffect(() => {
     if (isSelected) {
-      selectionScale.value = withSpring(1.26, {
-        damping: 11,
+      selectionScale.value = withSpring(1.18, {
+        damping: 12,
         stiffness: 160,
         mass: 0.6,
       });
@@ -96,16 +96,15 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
       zIndex={isSelected ? 999 : 1} // Keep selected marker above all others
     >
       <Animated.View style={[styles.container, animatedMarkerStyle]}>
-        {/* Rating or Tier Badge */}
+        {/* Rating or Tier Badge (Original text, no 'SELECTED' tag) */}
         <View
           style={[
             styles.badge,
             { backgroundColor: isPremium ? '#2A2207' : '#0B1C28' },
-            isSelected && styles.selectedBadge,
           ]}
         >
-          <Text style={[styles.badgeText, { color: isSelected ? '#FFFFFF' : accentColor }]}>
-            {isSelected ? '★ SELECTED' : isPremium ? '★ VIP' : `★ ${driver.rating.toFixed(1)}`}
+          <Text style={[styles.badgeText, { color: accentColor }]}>
+            {isPremium ? '★ VIP' : `★ ${driver.rating.toFixed(1)}`}
           </Text>
         </View>
 
