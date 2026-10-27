@@ -38,13 +38,16 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
   isSelected,
   onSelect,
 }) => {
-  // Native UI-thread shared values for smooth pop-up & pop-down spring physics
+  // Base scale for filter pop-up / pop-down
   const scale = useSharedValue(isVisible ? 1 : 0);
   const opacity = useSharedValue(isVisible ? 1 : 0);
 
+  // Smooth spring scale for selection (grows slightly bigger when selected)
+  const selectionScale = useSharedValue(isSelected ? 1.25 : 1);
+
+  // Filter visibility animation
   useEffect(() => {
     if (isVisible) {
-      // Elastic spring pop-up when becoming visible
       scale.value = withSpring(1, {
         damping: 12,
         stiffness: 150,
@@ -52,7 +55,6 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
       });
       opacity.value = withTiming(1, { duration: 220 });
     } else {
-      // Smooth shrink and fade away when filtered out
       scale.value = withTiming(0, {
         duration: 200,
         easing: Easing.bezier(0.25, 0.1, 0.25, 1),
@@ -61,8 +63,24 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
     }
   }, [isVisible]);
 
+  // Selection spring animation (smoothly grows ~25% bigger with slight bounce)
+  useEffect(() => {
+    if (isSelected) {
+      selectionScale.value = withSpring(1.26, {
+        damping: 11,
+        stiffness: 160,
+        mass: 0.6,
+      });
+    } else {
+      selectionScale.value = withSpring(1, {
+        damping: 14,
+        stiffness: 160,
+      });
+    }
+  }, [isSelected]);
+
   const animatedMarkerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.value * selectionScale.value }],
     opacity: opacity.value,
   }));
 
@@ -75,18 +93,19 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
       anchor={{ x: 0.5, y: 1 }}
       onPress={() => isVisible && onSelect(driver)}
       tracksViewChanges={false}
+      zIndex={isSelected ? 999 : 1} // Keep selected marker above all others
     >
-      <Animated.View
-        style={[
-          styles.container,
-          isSelected && styles.selectedContainer,
-          animatedMarkerStyle,
-        ]}
-      >
+      <Animated.View style={[styles.container, animatedMarkerStyle]}>
         {/* Rating or Tier Badge */}
-        <View style={[styles.badge, { backgroundColor: isPremium ? '#2A2207' : '#0B1C28' }]}>
-          <Text style={[styles.badgeText, { color: accentColor }]}>
-            {isPremium ? '★ VIP' : `★ ${driver.rating.toFixed(1)}`}
+        <View
+          style={[
+            styles.badge,
+            { backgroundColor: isPremium ? '#2A2207' : '#0B1C28' },
+            isSelected && styles.selectedBadge,
+          ]}
+        >
+          <Text style={[styles.badgeText, { color: isSelected ? '#FFFFFF' : accentColor }]}>
+            {isSelected ? '★ SELECTED' : isPremium ? '★ VIP' : `★ ${driver.rating.toFixed(1)}`}
           </Text>
         </View>
 
@@ -95,7 +114,7 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
           style={[
             styles.avatarBubble,
             { borderColor: accentColor },
-            isSelected && { borderColor: '#FFFFFF', borderWidth: 2.5 },
+            isSelected && styles.selectedAvatarBubble,
           ]}
         >
           <Image
@@ -104,13 +123,18 @@ const DriverMarkerComponent: React.FC<DriverMarkerProps> = ({
           />
 
           {/* Mini Vehicle Badge at bottom-right of avatar */}
-          <View style={[styles.carBadge, { backgroundColor: accentColor }]}>
-            <CarIcon color={isPremium ? '#000000' : '#0B0D13'} />
+          <View style={[styles.carBadge, { backgroundColor: isSelected ? '#FFFFFF' : accentColor }]}>
+            <CarIcon color={isSelected ? '#0B0D13' : isPremium ? '#000000' : '#0B0D13'} />
           </View>
         </View>
 
         {/* Pin Triangle Pointer */}
-        <View style={[styles.pointer, { borderTopColor: accentColor }]} />
+        <View
+          style={[
+            styles.pointer,
+            { borderTopColor: isSelected ? '#FFFFFF' : accentColor },
+          ]}
+        />
       </Animated.View>
     </Marker>
   );
@@ -132,11 +156,8 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 60,
-    height: 68,
-  },
-  selectedContainer: {
-    transform: [{ scale: 1.15 }],
+    width: 68,
+    height: 74,
   },
   badge: {
     paddingHorizontal: 6,
@@ -146,9 +167,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
+  selectedBadge: {
+    backgroundColor: '#00E5FF',
+    borderColor: '#FFFFFF',
+    shadowColor: '#00E5FF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 5,
+    elevation: 6,
+  },
   badgeText: {
     fontSize: 9,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 0.4,
   },
   avatarBubble: {
@@ -164,6 +194,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 5,
     elevation: 6,
+  },
+  selectedAvatarBubble: {
+    borderColor: '#FFFFFF',
+    borderWidth: 3,
+    shadowColor: '#00E5FF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.9,
+    shadowRadius: 8,
+    elevation: 10,
   },
   avatarImage: {
     width: '100%',
