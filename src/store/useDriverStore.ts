@@ -13,13 +13,18 @@ interface DriverStoreState {
   bookingStatus: BookingStatus;
   selectedDuration: number; // in hours: 2, 4, 8, 24
   bookingMode: 'now' | 'schedule';
+  scheduledDate: string;
+  scheduledTime: string;
   matchedDriver: Driver | null;
 
   // Actions
   setCategory: (category: FilterCategory) => void;
+  togglePremium: () => void;
   selectDriver: (driverId: string | null) => void;
   setDuration: (hours: number) => void;
   setBookingMode: (mode: 'now' | 'schedule') => void;
+  setScheduledDate: (date: string) => void;
+  setScheduledTime: (time: string) => void;
   startBooking: () => void;
   cancelBooking: () => void;
 
@@ -30,12 +35,14 @@ interface DriverStoreState {
 
 export const useDriverStore = create<DriverStoreState>((set, get) => ({
   drivers: MOCK_DRIVERS,
-  selectedCategory: 'all',
+  selectedCategory: 'standard', // Default is Standard Driver
   selectedDriverId: null,
 
   bookingStatus: 'idle',
   selectedDuration: 4, // default 4 hours
   bookingMode: 'now',
+  scheduledDate: 'Today, 28 Oct',
+  scheduledTime: '02:00 PM',
   matchedDriver: null,
 
   setCategory: (category: FilterCategory) => {
@@ -51,6 +58,17 @@ export const useDriverStore = create<DriverStoreState>((set, get) => ({
     });
   },
 
+  togglePremium: () => {
+    set(state => {
+      const nextCategory: FilterCategory =
+        state.selectedCategory === 'premium' ? 'standard' : 'premium';
+      return {
+        selectedCategory: nextCategory,
+        selectedDriverId: null,
+      };
+    });
+  },
+
   selectDriver: (driverId: string | null) => {
     set({ selectedDriverId: driverId });
   },
@@ -61,6 +79,14 @@ export const useDriverStore = create<DriverStoreState>((set, get) => ({
 
   setBookingMode: (mode: 'now' | 'schedule') => {
     set({ bookingMode: mode });
+  },
+
+  setScheduledDate: (date: string) => {
+    set({ scheduledDate: date });
+  },
+
+  setScheduledTime: (time: string) => {
+    set({ scheduledTime: time });
   },
 
   startBooking: () => {

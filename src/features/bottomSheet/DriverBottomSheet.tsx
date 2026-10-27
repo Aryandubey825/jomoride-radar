@@ -1,10 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Switch } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { useDriverStore } from '../../store/useDriverStore';
 import { COLORS } from '../../theme/colors';
-import { FilterCategory } from '../../types/driver';
 
 // Verified badge icon
 const CheckCircleIcon = ({ color }: { color: string }) => (
@@ -19,26 +18,43 @@ const CheckCircleIcon = ({ color }: { color: string }) => (
   </Svg>
 );
 
+// Calendar Icon
+const CalendarIcon = ({ color }: { color: string }) => (
+  <Svg width={15} height={15} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zM16 2v4M8 2v4M3 10h18"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
+
 export const DriverBottomSheet: React.FC = () => {
   // Snap points for the drawer
-  const snapPoints = useMemo(() => ['22%', '52%', '88%'], []);
+  const snapPoints = useMemo(() => ['22%', '58%', '90%'], []);
 
   // Store bindings
   const selectedCategory = useDriverStore(state => state.selectedCategory);
   const selectedDuration = useDriverStore(state => state.selectedDuration);
   const bookingMode = useDriverStore(state => state.bookingMode);
+  const scheduledDate = useDriverStore(state => state.scheduledDate);
+  const scheduledTime = useDriverStore(state => state.scheduledTime);
   const bookingStatus = useDriverStore(state => state.bookingStatus);
   const matchedDriver = useDriverStore(state => state.matchedDriver);
 
-  const setCategory = useDriverStore(state => state.setCategory);
+  const togglePremium = useDriverStore(state => state.togglePremium);
   const setDuration = useDriverStore(state => state.setDuration);
   const setBookingMode = useDriverStore(state => state.setBookingMode);
+  const setScheduledDate = useDriverStore(state => state.setScheduledDate);
+  const setScheduledTime = useDriverStore(state => state.setScheduledTime);
   const startBooking = useDriverStore(state => state.startBooking);
   const cancelBooking = useDriverStore(state => state.cancelBooking);
   const getHourlyRate = useDriverStore(state => state.getHourlyRate);
   const getTotalFare = useDriverStore(state => state.getTotalFare);
 
-  // Countdown timer for searching animation
+  // Countdown timer for Rapido-style search
   const [countdown, setCountdown] = useState(4);
 
   useEffect(() => {
@@ -52,6 +68,10 @@ export const DriverBottomSheet: React.FC = () => {
     return () => clearInterval(timer);
   }, [bookingStatus]);
 
+  const isPremium = selectedCategory === 'premium';
+  const hourlyRate = getHourlyRate();
+  const totalFare = getTotalFare();
+
   const durations = [
     { hours: 2, label: '2 Hrs' },
     { hours: 4, label: '4 Hrs' },
@@ -59,13 +79,12 @@ export const DriverBottomSheet: React.FC = () => {
     { hours: 24, label: '24 Hrs' },
   ];
 
-  const hourlyRate = getHourlyRate();
-  const totalFare = getTotalFare();
-  const isPremium = selectedCategory === 'premium';
+  const dates = ['Today, 28 Oct', 'Tomorrow, 29 Oct', 'Fri, 30 Oct'];
+  const times = ['09:00 AM', '02:00 PM', '07:00 PM', '10:00 PM'];
 
   return (
     <BottomSheet
-      index={1} // 52% default height
+      index={1} // 58% default height
       snapPoints={snapPoints}
       backgroundStyle={styles.bottomSheetBackground}
       handleIndicatorStyle={styles.handleIndicator}
@@ -76,61 +95,67 @@ export const DriverBottomSheet: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* ======================================================== */}
-        {/* STATE 1: IDLE - Booking & Rental Configuration          */}
+        {/* STATE 1: IDLE - Chauffeur Rental Configuration          */}
         {/* ======================================================== */}
         {bookingStatus === 'idle' && (
           <View style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
               <Text style={styles.title}>Hire a Chauffeur for Your Car</Text>
-              <Text style={styles.subtitle}>Select tier & booking duration</Text>
+              <Text style={styles.subtitle}>Verified on-demand personal drivers</Text>
             </View>
 
-            {/* Step 1: Tier Selector (Standard vs Premium) */}
-            <View style={styles.tierSelector}>
-              {(['all', 'standard', 'premium'] as FilterCategory[]).map(cat => {
-                const isActive = selectedCategory === cat;
-                const label =
-                  cat === 'all'
-                    ? 'All Fleet'
-                    : cat === 'standard'
-                    ? 'Standard • $22/h'
-                    : '★ Premium • $48/h';
-                const accent =
-                  cat === 'premium'
-                    ? COLORS.premiumGold
-                    : cat === 'standard'
-                    ? COLORS.primary
-                    : COLORS.textPrimary;
-
-                return (
-                  <TouchableOpacity
-                    key={cat}
+            {/* Step 1: Clean Premium Toggle Card (Replaces 3 Buttons) */}
+            <TouchableOpacity
+              style={[
+                styles.toggleCard,
+                isPremium && styles.toggleCardActive,
+                { borderColor: isPremium ? COLORS.premiumGold : COLORS.surfaceBorder },
+              ]}
+              onPress={togglePremium}
+              activeOpacity={0.85}
+            >
+              <View style={styles.toggleInfo}>
+                <View style={styles.tierTitleRow}>
+                  <Text style={[styles.tierTitle, isPremium && { color: COLORS.premiumGold }]}>
+                    {isPremium ? '★ VIP Premium Chauffeur' : 'Standard Verified Driver'}
+                  </Text>
+                  <View
                     style={[
-                      styles.tierPill,
-                      isActive && styles.tierPillActive,
-                      isActive && { borderColor: accent },
+                      styles.rateTag,
+                      { backgroundColor: isPremium ? '#2A2207' : '#102231' },
                     ]}
-                    onPress={() => setCategory(cat)}
-                    activeOpacity={0.75}
                   >
                     <Text
                       style={[
-                        styles.tierLabel,
-                        { color: isActive ? accent : COLORS.textSecondary },
-                        isActive && styles.tierLabelActive,
+                        styles.rateTagText,
+                        { color: isPremium ? COLORS.premiumGold : COLORS.primary },
                       ]}
                     >
-                      {label}
+                      ${hourlyRate}/hr
                     </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+                  </View>
+                </View>
+                <Text style={styles.tierDescription}>
+                  {isPremium
+                    ? 'Certified suited chauffeur for luxury cars & EVs'
+                    : 'Experienced driver for daily commute & sedans'}
+                </Text>
+              </View>
 
-            {/* Step 2: When (Now vs Schedule) */}
+              {/* iOS Style Switch */}
+              <Switch
+                value={isPremium}
+                onValueChange={togglePremium}
+                trackColor={{ false: '#262D3D', true: COLORS.premiumGold }}
+                thumbColor={isPremium ? '#000000' : '#FFFFFF'}
+                ios_backgroundColor="#262D3D"
+              />
+            </TouchableOpacity>
+
+            {/* Step 2: Timing Selector (Now vs Schedule) */}
             <View style={styles.sectionRow}>
-              <Text style={styles.sectionLabel}>TIMING</Text>
+              <Text style={styles.sectionLabel}>WHEN TO HIRE</Text>
               <View style={styles.timingPills}>
                 <TouchableOpacity
                   style={[
@@ -156,21 +181,68 @@ export const DriverBottomSheet: React.FC = () => {
                   ]}
                   onPress={() => setBookingMode('schedule')}
                 >
-                  <Text
-                    style={[
-                      styles.timingLabel,
-                      bookingMode === 'schedule' && styles.timingLabelActive,
-                    ]}
-                  >
-                    Schedule Today
-                  </Text>
+                  <View style={styles.scheduleRow}>
+                    <CalendarIcon color={bookingMode === 'schedule' ? '#00E5FF' : COLORS.textSecondary} />
+                    <Text
+                      style={[
+                        styles.timingLabel,
+                        { marginLeft: 6 },
+                        bookingMode === 'schedule' && styles.timingLabelActive,
+                      ]}
+                    >
+                      Schedule Later
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               </View>
             </View>
 
+            {/* Smooth Expandable Date & Time Picker (Only when Schedule is selected!) */}
+            {bookingMode === 'schedule' && (
+              <View style={styles.scheduleAccordion}>
+                {/* Select Date */}
+                <Text style={styles.subSectionLabel}>SELECT DATE</Text>
+                <View style={styles.chipRow}>
+                  {dates.map(date => {
+                    const isSelected = scheduledDate === date;
+                    return (
+                      <TouchableOpacity
+                        key={date}
+                        style={[styles.chip, isSelected && styles.chipActive]}
+                        onPress={() => setScheduledDate(date)}
+                      >
+                        <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
+                          {date}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                {/* Select Time Slot */}
+                <Text style={[styles.subSectionLabel, { marginTop: 10 }]}>PICKUP TIME</Text>
+                <View style={styles.chipRow}>
+                  {times.map(time => {
+                    const isSelected = scheduledTime === time;
+                    return (
+                      <TouchableOpacity
+                        key={time}
+                        style={[styles.chip, isSelected && styles.chipActive]}
+                        onPress={() => setScheduledTime(time)}
+                      >
+                        <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>
+                          {time}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
             {/* Step 3: Duration Selection (Hours) */}
             <View style={styles.sectionRow}>
-              <Text style={styles.sectionLabel}>HIRE DURATION</Text>
+              <Text style={styles.sectionLabel}>DUTY DURATION</Text>
               <View style={styles.durationPills}>
                 {durations.map(d => {
                   const isSelected = selectedDuration === d.hours;
@@ -197,24 +269,27 @@ export const DriverBottomSheet: React.FC = () => {
               </View>
             </View>
 
-            {/* Fare Summary Breakdown Card */}
+            {/* Fare Breakdown Card */}
             <View style={styles.fareCard}>
               <View style={styles.fareRow}>
                 <View>
                   <Text style={styles.fareTierTitle}>
-                    {isPremium ? '★ Premium Executive Chauffeur' : 'Standard Verified Driver'}
+                    {isPremium ? '★ VIP Premium Chauffeur' : 'Standard Verified Driver'}
                   </Text>
                   <Text style={styles.fareCalculation}>
-                    ${hourlyRate}/hr × {selectedDuration} hours duration
+                    ${hourlyRate}/hr × {selectedDuration} hours
+                    {bookingMode === 'schedule' ? ` • ${scheduledDate} @ ${scheduledTime}` : ''}
                   </Text>
                 </View>
-                <Text style={styles.totalFareText}>${totalFare}</Text>
+                <Text style={[styles.totalFareText, isPremium && { color: COLORS.premiumGold }]}>
+                  ${totalFare}
+                </Text>
               </View>
 
               <View style={styles.perkRow}>
                 <CheckCircleIcon color={COLORS.onlineGreen} />
                 <Text style={styles.perkText}>
-                  Includes car handover insurance & background check
+                  Includes car handover insurance & driver background verification
                 </Text>
               </View>
             </View>
@@ -238,7 +313,7 @@ export const DriverBottomSheet: React.FC = () => {
         )}
 
         {/* ======================================================== */}
-        {/* STATE 2: SEARCHING - Rapido / Uber Style Radar Timer    */}
+        {/* STATE 2: SEARCHING - Rapido Style Live Radar Timer      */}
         {/* ======================================================== */}
         {bookingStatus === 'searching' && (
           <View style={styles.searchingContainer}>
@@ -247,27 +322,27 @@ export const DriverBottomSheet: React.FC = () => {
               <Text style={styles.countdownNumber}>{countdown}s</Text>
             </View>
 
-            <Text style={styles.searchingTitle}>Searching Nearby Chauffeurs...</Text>
+            <Text style={styles.searchingTitle}>Dispatching Nearest Chauffeur...</Text>
             <Text style={styles.searchingSubtitle}>
-              Matching with nearest verified {isPremium ? 'Premium' : 'Standard'} drivers within 1.5 km
+              Connecting telemetry with {isPremium ? '★ Premium VIP' : 'Standard'} drivers within 1.5 km
             </Text>
 
             <View style={styles.searchingStatusPill}>
               <View style={styles.liveSearchingDot} />
-              <Text style={styles.searchingStatusText}>CONNECTING TELEMETRY RADAR</Text>
+              <Text style={styles.searchingStatusText}>LIVE RADAR ACTIVE</Text>
             </View>
           </View>
         )}
 
         {/* ======================================================== */}
-        {/* STATE 3: CONFIRMED - Driver Assigned & On The Way      */}
+        {/* STATE 3: CONFIRMED - Driver Assigned & On The Way       */}
         {/* ======================================================== */}
         {bookingStatus === 'confirmed' && matchedDriver && (
           <View style={styles.confirmedContainer}>
             <View style={styles.confirmedHeader}>
               <View style={styles.successBadge}>
                 <CheckCircleIcon color="#10B981" />
-                <Text style={styles.successBadgeText}>CHAUFFEUR ASSIGNED</Text>
+                <Text style={styles.successBadgeText}>CHAUFFEUR ON THE WAY</Text>
               </View>
               <Text style={styles.etaHeading}>Arriving at your car in 3 mins</Text>
             </View>
@@ -279,8 +354,18 @@ export const DriverBottomSheet: React.FC = () => {
               <View style={styles.driverDetails}>
                 <View style={styles.nameBadgeRow}>
                   <Text style={styles.driverName}>{matchedDriver.name}</Text>
-                  <View style={[styles.tierBadge, { backgroundColor: isPremium ? '#2A2207' : '#192030' }]}>
-                    <Text style={[styles.tierBadgeText, { color: isPremium ? COLORS.premiumGold : COLORS.primary }]}>
+                  <View
+                    style={[
+                      styles.tierBadge,
+                      { backgroundColor: isPremium ? '#2A2207' : '#192030' },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.tierBadgeText,
+                        { color: isPremium ? COLORS.premiumGold : COLORS.primary },
+                      ]}
+                    >
                       {isPremium ? 'VIP CHAUFFEUR' : 'VERIFIED'}
                     </Text>
                   </View>
@@ -290,7 +375,7 @@ export const DriverBottomSheet: React.FC = () => {
                   ★ {matchedDriver.rating.toFixed(2)} • 1,420+ safe trips
                 </Text>
                 <Text style={styles.vehicleSpecialty}>
-                  Vehicle assigned: <Text style={styles.vehicleHighlight}>Your Personal Car</Text>
+                  Mode: <Text style={styles.vehicleHighlight}>Arriving via 2-Wheeler to take keys</Text>
                 </Text>
               </View>
             </View>
@@ -299,7 +384,7 @@ export const DriverBottomSheet: React.FC = () => {
             <View style={styles.otpCard}>
               <View>
                 <Text style={styles.otpLabel}>KEY HANDOVER OTP</Text>
-                <Text style={styles.otpSublabel}>Share with driver before handing keys</Text>
+                <Text style={styles.otpSublabel}>Share with driver before handing over car keys</Text>
               </View>
               <Text style={styles.otpCode}>4821</Text>
             </View>
@@ -346,7 +431,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   header: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   title: {
     fontSize: 18,
@@ -359,33 +444,50 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: 2,
   },
-  tierSelector: {
+  toggleCard: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-  },
-  tierPill: {
-    flex: 1,
-    paddingVertical: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 12,
+    justifyContent: 'space-between',
     backgroundColor: COLORS.surfaceLight,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceBorder,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    marginBottom: 14,
   },
-  tierPillActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+  toggleCardActive: {
+    backgroundColor: 'rgba(255, 215, 0, 0.05)',
   },
-  tierLabel: {
-    fontSize: 11,
-    fontWeight: '700',
+  toggleInfo: {
+    flex: 1,
+    marginRight: 12,
   },
-  tierLabelActive: {
+  tierTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 3,
+  },
+  tierTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    marginRight: 8,
+  },
+  rateTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  rateTagText: {
+    fontSize: 10,
     fontWeight: '800',
   },
+  tierDescription: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    lineHeight: 15,
+  },
   sectionRow: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   sectionLabel: {
     fontSize: 10,
@@ -411,6 +513,10 @@ const styles = StyleSheet.create({
     borderColor: '#00E5FF',
     backgroundColor: 'rgba(0, 229, 255, 0.08)',
   },
+  scheduleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   timingLabel: {
     fontSize: 12,
     fontWeight: '600',
@@ -419,6 +525,47 @@ const styles = StyleSheet.create({
   timingLabelActive: {
     color: '#00E5FF',
     fontWeight: '700',
+  },
+  scheduleAccordion: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+    marginBottom: 14,
+  },
+  subSectionLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: COLORS.textMuted,
+    letterSpacing: 0.7,
+    marginBottom: 6,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  chip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: COLORS.surfaceLight,
+    borderWidth: 1,
+    borderColor: COLORS.surfaceBorder,
+  },
+  chipActive: {
+    borderColor: '#00E5FF',
+    backgroundColor: 'rgba(0, 229, 255, 0.12)',
+  },
+  chipText: {
+    fontSize: 10,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  chipTextActive: {
+    color: '#00E5FF',
+    fontWeight: '800',
   },
   durationPills: {
     flexDirection: 'row',
