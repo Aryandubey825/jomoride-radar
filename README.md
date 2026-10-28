@@ -10,12 +10,16 @@
 JomoRide is a high-performance **Driver-as-a-Service (DaaS)** mobile interface that renders nearby available chauffeurs on an interactive 60fps radar map with a draggable booking drawer for tier selection (`Standard` vs. `★ Premium VIP`).
 
 ### ✨ Core Features
-1. **Interactive Radar Map:** Custom dark obsidian MapKit canvas centered on real-time driver coordinates.
+1. **Interactive Radar Map:** Custom dark obsidian MapKit canvas centered on real-time driver coordinates with live re-center controls.
 2. **60FPS Custom Vehicle Markers:** Custom driver avatars with rating badges and vehicle icons. Optimized with `React.memo` and `tracksViewChanges={false}` hardware texture acceleration.
-3. **Draggable Drawer (Bottom Sheet):** Silky-smooth bottom sheet built on `@gorhom/bottom-sheet` and `react-native-reanimated` with 3 snap points (`16%`, `45%`, `85%`).
-4. **Lag-Free Reactive Filtering:** Instant filtering between `All Fleet`, `Standard`, and `★ Premium` categories with automatic camera reframing (`fitToCoordinates`).
-5. **Radar Pulse Ring:** UI-thread native pulse animation indicating live telemetry around the user location.
-6. **Centralized State Management:** Zero-boilerplate, atomic selector Zustand store preventing unnecessary screen re-renders.
+3. **Draggable Drawer (Bottom Sheet):** Silky-smooth bottom sheet built on `@gorhom/bottom-sheet` and `react-native-reanimated` with 3 snap points (`22%`, `60%`, `92%`).
+4. **Lag-Free Reactive Filtering:** Instant filtering between `Standard` and `★ Premium VIP` categories with automatic camera reframing (`fitToCoordinates`).
+5. **DaaS Booking Lifecycle (Instant vs. Schedule):**
+   - **Right Now (Instant):** 3.5s radar telemetry countdown, random chauffeur matching, live ETA (3 mins), and real-time route polyline.
+   - **Schedule Later:** Liquid Glass Calendar modal (7-column grid + 3-column iOS wheel time picker), multi-day duration stepper (1-168 hrs), scheduled reservation confirmation.
+6. **Key Handover Security Protocol:** Dedicated OTP (`4821`) handover card with chauffeur arrival telemetry.
+7. **Radar Pulse Ring:** UI-thread native pulse animation indicating live telemetry around the user location.
+8. **Centralized Atomic State:** Zero-boilerplate, atomic selector Zustand store preventing unnecessary screen re-renders.
 
 ---
 
