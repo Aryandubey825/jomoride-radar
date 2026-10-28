@@ -5,37 +5,54 @@
 
 ---
 
-## 📱 1. Executive Summary & Domain Concept
+## 💡 1. Product Philosophy & Engineering Vision (My Thinking)
 
-**JomoRide** is an on-demand **Driver-as-a-Service (DaaS)** platform. Unlike traditional ride-hailing services (e.g., Uber/Lyft) where a passenger hires a vehicle, JomoRide enables car owners to hire verified professional chauffeurs to drive their **own personal vehicles**.
-
-### 🛵 The DaaS Workflow:
-1. **User requests a chauffeur:** Either for instant dispatch (*Right Now*) or scheduled in advance (*Schedule Later*).
-2. **Telemetry Matching:** Radar scans nearby active drivers and matches an eligible chauffeur based on the chosen tier (`Standard` vs. `★ Premium VIP`).
-3. **Arrival & Key Handover:** The chauffeur travels via 2-wheeler to the customer's parked vehicle location.
-4. **Cryptographic OTP Handshake:** Before the car keys are handed over, the customer verifies the driver identity using a secure **Key Handover OTP (`4821`)**.
-5. **Chauffeur Duty:** The driver pilots the customer's vehicle for the requested duration (1 to 168 hours).
+### The DaaS (Driver-as-a-Service) Problem Space
+Unlike conventional taxi or ride-hailing apps (Uber, Lyft) where the customer hails a car and sits in the back, **JomoRide is a Driver-as-a-Service (DaaS) platform**:
+* The customer **owns the car**.
+* The customer hires a **vetted professional chauffeur** to drive their personal vehicle (for multi-hour duties, meetings, outstation trips, or safe returns).
+* The chauffeur arrives at the vehicle location via **2-wheeler** to collect the car keys.
 
 ---
 
-## ✨ 2. Key Features & User Experience
+### 🗺️ System Roadmap: Current Implementation vs. Next Phase
 
-| Feature | Technical Implementation | User Experience |
-| :--- | :--- | :--- |
-| **Interactive Obsidian Radar** | Apple MapKit with custom night obsidian styling (`mapDarkStyle.ts`). | Smooth map panning, rotation, and custom navigation re-center control. |
-| **60FPS Custom Markers** | Hardware texture acceleration via `tracksViewChanges={false}` & `React.memo`. | Custom circular driver avatars with rating badges and vehicle icons. |
-| **User Pulse Wave** | Native Reanimated worklet loop (`useSharedValue` + `withRepeat`). | Concentric glowing radar waves pulsing around the customer's live GPS. |
-| **Draggable Bottom Sheet** | Native UI-thread gesture responder (`@gorhom/bottom-sheet` v4). | 3 fluid snap points (`22%`, `60%`, `92%`) running at 120Hz ProMotion. |
-| **Minimalist VIP Toggle** | Native iOS Switch connected to Zustand category state. | Instantly toggles between Standard ($22/hr) and Premium VIP ($48/hr). |
-| **Liquid Glass Calendar** | Modal overlay with 7-column calendar & 3-column iOS wheel time picker. | Fixed viewport (`280px`) eliminates layout thrashing during month & tab switches. |
-| **Multi-Day Duty Stepper** | Native UIStepper `[ − \| + ]` + editable numeric input. | Supports chauffeur coverage from 1 hour up to 168 hours (7 full days). |
-| **Random Radar Matching** | 3.5s telemetry scan countdown picking randomly among tier drivers. | Realistic Rapido-style radar animation with dynamic driver allocation. |
-| **Separated Booking Logic** | Context-aware state machine (`now` vs `schedule`). | Instant bookings show 3 min ETA and map polyline; Scheduled bookings confirm future pickup without fake timers. |
-| **Key Handover OTP Card** | Protected flexbox layout with custom iOS glass badge capsule. | Displays secure OTP (`4821`) without screen boundary clipping. |
+```
+┌──────────────────────────────────────────────┐       ┌──────────────────────────────────────────────┐
+│        PHASE 1: CURRENT IMPLEMENTATION       │  ──►  │          PHASE 2: FUTURE ROADMAP             │
+│        (Track A Assignment Scope)            │       │          (Post-Handover Vision)              │
+├──────────────────────────────────────────────┤       ├──────────────────────────────────────────────┤
+│ • 60FPS Interactive MapKit Radar Canvas      │       │ • Live In-Trip Vehicle Telemetry             │
+│ • Hardware-accelerated Driver Markers        │       │   (Track your personal car after handover)   │
+│ • Tier Selection (Standard vs. Premium VIP)  │       │                                              │
+│ • Instant Dispatch vs. Scheduled Duty        │       │ • Family & Guardian Live Location Sharing    │
+│ • Liquid Glass Calendar & Wheel Time Picker  │       │   (1-tap WhatsApp/iMessage live web link)    │
+│ • Random Telemetry Radar Matching            │       │                                              │
+│ • Secure Key Handover Protocol (OTP 4821)    │       │ • Speed Telemetry & Geo-Fencing Alerts       │
+└──────────────────────────────────────────────┘       └──────────────────────────────────────────────┘
+```
+
+#### ✅ Phase 1: What is Currently Built (Track A Scope)
+1. **Radar Telemetry Canvas:** 60fps dark obsidian MapKit interface rendering real-time nearby drivers with hardware texture caching.
+2. **Dynamic Tier Switching:** Native iOS switch instantly toggling between Standard verified drivers ($22/hr) and VIP Chauffeurs ($48/hr) with Reanimated spring physics.
+3. **Dual Booking Modalities:**
+   - **Right Now (Instant):** 3.5s radar scan, random driver matching, 3 min ETA, and live route polyline on map.
+   - **Schedule Later:** Strict 7-column Liquid Glass calendar grid and 3-column wheel time picker; multi-day duty stepper (1–168 hrs). Confirms reservation without premature route lines or fake timers.
+4. **Key Handover Security Protocol:** Dedicated OTP (`4821`) card ensuring verified handover before the car keys are released to the chauffeur.
+
+#### 🚀 Phase 2: Planned Architectural Roadmap
+1. **Post-Handover Live Vehicle Tracking:**
+   - Once the driver arrives and enters the valid OTP (`4821`), the car keys are officially handed over.
+   - The customer app immediately transitions to **In-Trip Vehicle Telemetry**: Since it is the customer's *own personal car*, the user can track exactly where their vehicle is being driven in real-time, including speed and route stops.
+2. **Family & Relative Live Share (Guardian Tracking):**
+   - A dedicated *"Share Vehicle Location"* button generating a secure, end-to-end encrypted live tracking web link.
+   - Customers can share this link with family or relatives via WhatsApp/iMessage so loved ones have continuous visibility into the car's whereabouts.
+3. **Geo-Fencing & Speed Limits:**
+   - Real-time push alerts if the personal vehicle departs a pre-configured perimeter or exceeds defined safety speed thresholds.
 
 ---
 
-## 🏛️ 3. System Architecture & Technical Design
+## 🏛️ 2. System Architecture & Technical Decisions
 
 ### Component Hierarchy Tree
 
@@ -78,13 +95,12 @@ App.tsx
 
 ---
 
-## ⚡ 4. Deep Performance Engineering (60FPS / 120Hz)
+## ⚡ 3. Deep Performance Engineering (60FPS / 120Hz)
 
 ### 1. Zero-Jank State Management: Zustand vs. Context / Redux
-* **The Problem:** In React Native map applications, putting state in standard `React.createContext` causes the entire component tree (including the heavy `MapView` and all its child markers) to re-render whenever bottom sheet state changes (e.g., dragging the sheet, incrementing hours, typing in duration). This drops frames drastically (<25fps).
+* **The Problem:** In React Native map applications, putting state in standard `React.createContext` causes the entire component tree (including the heavy `MapView` and all child markers) to re-render whenever bottom sheet state changes (e.g. dragging the sheet, incrementing hours, typing in duration). This drops frames drastically (<25fps).
 * **The Solution:** We adopted **Zustand** with granular atomic selectors:
   ```ts
-  // Map only re-renders if the category or driver assignment changes
   const selectedCategory = useDriverStore(state => state.selectedCategory);
   const matchedDriver = useDriverStore(state => state.matchedDriver);
   ```
@@ -93,19 +109,17 @@ App.tsx
 ### 2. Eliminating Map Marker Re-Draw Bottlenecks (`tracksViewChanges`)
 * **The Problem:** `react-native-maps` takes an off-screen bitmap snapshot of custom React Native views on every frame by default. With 10+ custom avatar markers with SVG badges, this destroys the iOS Main Thread during map dragging and zooming.
 * **The Solution:** 
-  1. We wrap each marker inside `React.memo` with a strict equality comparator checking only `id`, `coordinates`, `type`, and `isSelected`.
-  2. We permanently set `tracksViewChanges={false}`, which instructs iOS MapKit to bake the marker into a static GPU texture.
+  1. We wrap each marker inside `React.memo` with a strict equality comparator.
+  2. We permanently set `tracksViewChanges={false}`, instructing iOS MapKit to bake the marker into a static GPU hardware texture.
   3. Marker scaling on filter change is driven by `react-native-reanimated` spring physics running directly on the native render thread.
 
 ### 3. Viewport Geometry & Eliminating Dual-Animation Thrashing
-* **The Problem:** Combining React Native's imperative `LayoutAnimation.configureNext` with declarative Reanimated `layout={LinearTransition...}` causes UIKit layout passes to fight against Reanimated worklets. When switching between Date and Time tabs, this caused the card to visibly wobble and shake ("hil rha hai").
-* **The Solution:** 
-  - We gave the modal content viewport a fixed mathematical height of `280px` (which accommodates 6-row months like January 2027 without clipping).
-  - Tab switching between Calendar and Wheel Picker uses pure declarative cross-fades (`FadeIn.duration(180)` / `FadeOut.duration(100)`) with zero layout repositioning passes.
+* Combining React Native's imperative `LayoutAnimation.configureNext` with declarative Reanimated `layout={LinearTransition...}` causes UIKit layout passes to fight against Reanimated worklets, causing the card to wobble/shake.
+* **Fix:** Enforced a fixed mathematical viewport height (`280px`) with declarative cross-fades (`FadeIn.duration(180)` / `FadeOut.duration(100)`), ensuring zero layout thrashing during tab or month transitions.
 
 ---
 
-## 📂 5. Project Directory Structure
+## 📂 4. Project Directory Structure
 
 ```text
 jomoride-radar/
@@ -138,76 +152,43 @@ jomoride-radar/
 
 ---
 
-## 🛠️ 6. Local Setup & Running
+## 🛠️ 5. Local Setup & Running
 
-### Prerequisites
-* macOS with **Xcode** (15+ recommended)
-* **Node.js** (>= 20.x)
-* **CocoaPods**
-
-### Quickstart
 ```bash
 # 1. Clone repository
 git clone https://github.com/Aryandubey825/jomoride-radar.git
 cd jomoride-radar
 
-# 2. Install JavaScript packages
+# 2. Install dependencies & CocoaPods
 npm install
-
-# 3. Install iOS CocoaPods
 cd ios && pod install && cd ..
 
-# 4. Start Metro bundler
+# 3. Start Metro & Launch iOS Simulator
 npm start
-
-# 5. Launch iOS Simulator (in a new terminal tab)
 npm run ios
 ```
 
 ---
 
-## 📦 7. How to Generate Local Xcode `.ipa` Build (No Paid Account Needed)
+## 📦 6. Local iOS `.ipa` Generation (Per Assignment Specification)
 
-Per assignment instructions, **cloud builds (such as EAS Cloud) are strictly prohibited** and the `.ipa` must be generated locally using Xcode on a Mac. You **DO NOT** need a paid \$99/year Apple Developer Account to produce a valid local `.ipa`.
+Per assignment instructions, the `.ipa` was compiled locally on a Mac using Xcode build tooling without cloud services.
 
-### Method A: Via Xcode UI (Recommended)
-1. **Open the workspace:**
-   ```bash
-   cd ios && open JomoRide.xcworkspace
-   ```
-   *(Always open `.xcworkspace`, never `.xcodeproj`)*
-2. **Select Destination:** In Xcode's top toolbar, click the device selector and choose **Any iOS Device (arm64)**.
-3. **Configure Free Signing:**
-   - Select the `JomoRide` root project in the left Project Navigator.
-   - Go to **Signing & Capabilities**.
-   - Check **Automatically manage signing**.
-   - Select your personal Apple ID under **Team** (*Personal Team*). Xcode generates a free local provisioning profile automatically.
-4. **Create Archive:** From the macOS menu bar, click **Product** > **Archive**.
-5. **Export `.ipa`:**
-   - When the **Organizer** window opens, select the new archive.
-   - Click **Distribute App** (blue button).
-   - Select **Development** (or **Ad Hoc**).
-   - Click **Next** through default distribution options and click **Export**.
-   - Xcode will output the final `JomoRide.ipa` file to your chosen folder.
-
-### Method B: Terminal Packaging (CLI)
-You can also package the compiled `.app` into an `.ipa` directly from your terminal:
 ```bash
-# 1. Build the Release bundle
 cd ios
-xcodebuild -workspace JomoRide.xcworkspace -scheme JomoRide -configuration Release -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO
+# 1. Compile Release build
+xcodebuild -workspace JomoRide.xcworkspace -scheme JomoRide -configuration Release -destination 'generic/platform=iOS' -derivedDataPath ./build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
 # 2. Package into .ipa
-mkdir -p build/Payload
-cp -r build/Build/Products/Release-iphoneos/JomoRide.app build/Payload/
-cd build && zip -r JomoRide.ipa Payload
-mv JomoRide.ipa ~/Desktop/
+mkdir -p ./build/Payload
+cp -r ./build/Build/Products/Release-iphoneos/JomoRide.app ./build/Payload/
+cd ./build && zip -r JomoRide.ipa Payload && mv JomoRide.ipa ~/Desktop/
 ```
-The resulting `JomoRide.ipa` will be on your Desktop, ready for email submission.
+The resulting `JomoRide.ipa` is available on the Desktop and attached to the submission.
 
 ---
 
-## 🎯 8. Assignment Verification Matrix (Track A)
+## 🎯 7. Assignment Verification Matrix (Track A)
 
 | Evaluation Parameter | Assignment Requirement | JomoRide Status |
 | :--- | :--- | :---: |
