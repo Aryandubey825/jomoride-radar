@@ -6,9 +6,9 @@ export const COLORS = {
   surfaceBorder: 'rgba(255, 255, 255, 0.08)',
   surfaceBorderActive: 'rgba(255, 255, 255, 0.22)',
 
-  // Brand / Accents
-  primary: '#00E5FF',       // Neon Cyan (Radar / User location)
-  primaryMuted: 'rgba(0, 229, 255, 0.15)',
+  // Brand / Accents (Apple iOS System Blue & Obsidian)
+  primary: '#0A84FF',       // Apple System Blue (Calm, standard iOS tint)
+  primaryMuted: 'rgba(10, 132, 255, 0.15)',
   
   premiumGold: '#FFD700',   // Champagne Gold for Premium tier
   premiumGoldMuted: 'rgba(255, 215, 0, 0.15)',

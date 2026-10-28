@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   userBadge: {
-    backgroundColor: '#00E5FF',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 8,
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   userBadgeText: {
-    color: '#0B0D13',
+    color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 0.6,
@@ -64,9 +64,9 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(0, 229, 255, 0.2)',
+    backgroundColor: 'rgba(10, 132, 255, 0.2)',
     borderWidth: 1.5,
-    borderColor: 'rgba(0, 229, 255, 0.6)',
+    borderColor: 'rgba(10, 132, 255, 0.6)',
   },
   outerRing: {
     width: 18,

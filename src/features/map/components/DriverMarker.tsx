@@ -167,9 +167,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   selectedBadge: {
-    backgroundColor: '#00E5FF',
+    backgroundColor: '#0A84FF',
     borderColor: '#FFFFFF',
-    shadowColor: '#00E5FF',
+    shadowColor: '#0A84FF',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,
     shadowRadius: 5,
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   selectedAvatarBubble: {
     borderColor: '#FFFFFF',
     borderWidth: 3,
-    shadowColor: '#00E5FF',
+    shadowColor: '#0A84FF',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.9,
     shadowRadius: 8,

@@ -19,7 +19,7 @@ const NavigationIcon = () => (
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"
-      fill="rgba(0, 229, 255, 0.25)"
+      fill="rgba(10, 132, 255, 0.25)"
     />
   </Svg>
 );
@@ -34,6 +34,8 @@ export const MapRadarView: React.FC = () => {
   const selectDriver = useDriverStore(state => state.selectDriver);
   const bookingStatus = useDriverStore(state => state.bookingStatus);
   const matchedDriver = useDriverStore(state => state.matchedDriver);
+  const bookingMode = useDriverStore(state => state.bookingMode);
+  const isDriverDeparted = useDriverStore(state => state.isDriverDeparted);
 
   const filteredDrivers = useMemo(() => {
     if (selectedCategory === 'all') return drivers;
@@ -91,24 +93,37 @@ export const MapRadarView: React.FC = () => {
     }
   }, [selectedCategory]);
 
-  // When chauffeur is confirmed, smoothly frame both the chauffeur and the user!
+  // When chauffeur is confirmed, smoothly frame both the chauffeur and the user once en route!
   useEffect(() => {
     if (bookingStatus === 'confirmed' && matchedDriver && mapRef.current) {
-      mapRef.current.fitToCoordinates(
-        [
-          matchedDriver.coordinate,
+      if (bookingMode === 'now' || isDriverDeparted) {
+        mapRef.current.fitToCoordinates(
+          [
+            matchedDriver.coordinate,
+            {
+              latitude: DEFAULT_REGION.latitude,
+              longitude: DEFAULT_REGION.longitude,
+            },
+          ],
           {
-            latitude: DEFAULT_REGION.latitude,
+            edgePadding: { top: 120, right: 60, bottom: 420, left: 60 },
+            animated: true,
+          }
+        );
+      } else {
+        // Scheduled booking waiting for pickup: keep map centered calmly on user pickup area
+        mapRef.current.animateToRegion(
+          {
+            latitude: DEFAULT_REGION.latitude - 0.0048,
             longitude: DEFAULT_REGION.longitude,
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.015,
           },
-        ],
-        {
-          edgePadding: { top: 120, right: 60, bottom: 420, left: 60 },
-          animated: true,
-        }
-      );
+          600
+        );
+      }
     }
-  }, [bookingStatus, matchedDriver]);
+  }, [bookingStatus, matchedDriver, bookingMode, isDriverDeparted]);
 
   return (
     <View style={styles.container}>
@@ -145,24 +160,26 @@ export const MapRadarView: React.FC = () => {
           />
         ))}
 
-        {/* Live Route Polyline connecting matched chauffeur to user */}
-        {bookingStatus === 'confirmed' && matchedDriver && (
-          <Polyline
-            coordinates={[
-              {
-                latitude: matchedDriver.coordinate.latitude,
-                longitude: matchedDriver.coordinate.longitude,
-              },
-              {
-                latitude: DEFAULT_REGION.latitude,
-                longitude: DEFAULT_REGION.longitude,
-              },
-            ]}
-            strokeColor="#00E5FF"
-            strokeWidth={3.5}
-            lineDashPattern={[0]}
-          />
-        )}
+        {/* Live Route Polyline connecting matched chauffeur to user (instant dispatch or scheduled once departed) */}
+        {bookingStatus === 'confirmed' &&
+          matchedDriver &&
+          (bookingMode === 'now' || isDriverDeparted) && (
+            <Polyline
+              coordinates={[
+                {
+                  latitude: matchedDriver.coordinate.latitude,
+                  longitude: matchedDriver.coordinate.longitude,
+                },
+                {
+                  latitude: DEFAULT_REGION.latitude,
+                  longitude: DEFAULT_REGION.longitude,
+                },
+              ]}
+              strokeColor={COLORS.primary}
+              strokeWidth={3.5}
+              lineDashPattern={[0]}
+            />
+          )}
       </MapView>
 
       {/* Floating Re-center Button (Top-Right) */}
@@ -192,7 +209,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: 'rgba(0, 229, 255, 0.35)',
+    borderColor: 'rgba(10, 132, 255, 0.35)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
