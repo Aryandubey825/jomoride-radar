@@ -35,7 +35,6 @@ export const MapRadarView: React.FC = () => {
   const bookingStatus = useDriverStore(state => state.bookingStatus);
   const matchedDriver = useDriverStore(state => state.matchedDriver);
   const bookingMode = useDriverStore(state => state.bookingMode);
-  const isDriverDeparted = useDriverStore(state => state.isDriverDeparted);
 
   const filteredDrivers = useMemo(() => {
     if (selectedCategory === 'all') return drivers;
@@ -93,10 +92,10 @@ export const MapRadarView: React.FC = () => {
     }
   }, [selectedCategory]);
 
-  // When chauffeur is confirmed, smoothly frame both the chauffeur and the user once en route!
+  // When chauffeur is confirmed for instant dispatch, smoothly frame both the chauffeur and the user!
   useEffect(() => {
     if (bookingStatus === 'confirmed' && matchedDriver && mapRef.current) {
-      if (bookingMode === 'now' || isDriverDeparted) {
+      if (bookingMode === 'now') {
         mapRef.current.fitToCoordinates(
           [
             matchedDriver.coordinate,
@@ -123,7 +122,7 @@ export const MapRadarView: React.FC = () => {
         );
       }
     }
-  }, [bookingStatus, matchedDriver, bookingMode, isDriverDeparted]);
+  }, [bookingStatus, matchedDriver, bookingMode]);
 
   return (
     <View style={styles.container}>
@@ -160,10 +159,10 @@ export const MapRadarView: React.FC = () => {
           />
         ))}
 
-        {/* Live Route Polyline connecting matched chauffeur to user (instant dispatch or scheduled once departed) */}
+        {/* Live Route Polyline connecting matched chauffeur to user (instant dispatch only) */}
         {bookingStatus === 'confirmed' &&
           matchedDriver &&
-          (bookingMode === 'now' || isDriverDeparted) && (
+          bookingMode === 'now' && (
             <Polyline
               coordinates={[
                 {

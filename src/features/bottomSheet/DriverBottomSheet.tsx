@@ -319,7 +319,6 @@ export const DriverBottomSheet: React.FC = () => {
   const scheduledTimestamp = useDriverStore(state => state.scheduledTimestamp);
   const bookingStatus = useDriverStore(state => state.bookingStatus);
   const matchedDriver = useDriverStore(state => state.matchedDriver);
-  const isDriverDeparted = useDriverStore(state => state.isDriverDeparted);
 
   const togglePremium = useDriverStore(state => state.togglePremium);
   const setDuration = useDriverStore(state => state.setDuration);
@@ -329,7 +328,6 @@ export const DriverBottomSheet: React.FC = () => {
   const setScheduledTimestamp = useDriverStore(state => state.setScheduledTimestamp);
   const startBooking = useDriverStore(state => state.startBooking);
   const cancelBooking = useDriverStore(state => state.cancelBooking);
-  const departDriverForKeys = useDriverStore(state => state.departDriverForKeys);
   const getHourlyRate = useDriverStore(state => state.getHourlyRate);
   const getTotalFare = useDriverStore(state => state.getTotalFare);
 
@@ -757,8 +755,8 @@ export const DriverBottomSheet: React.FC = () => {
                     Chauffeur is approaching on 2-wheeler to collect keys
                   </Text>
                 </View>
-              ) : !isDriverDeparted ? (
-                /* Scheduled Booking: Reserved for future date & time (no 3 min ETA, no polyline yet) */
+              ) : (
+                /* Scheduled Booking: Reserved for future date & time (no 3 min ETA, no map line) */
                 <View style={styles.confirmedHeader}>
                   <View style={styles.scheduleBadge}>
                     <CalendarIcon color="#0A84FF" />
@@ -771,50 +769,20 @@ export const DriverBottomSheet: React.FC = () => {
                     {selectedDuration}h duty reserved • Key handover at your vehicle
                   </Text>
                 </View>
-              ) : (
-                /* Scheduled Booking: Driver has marked departure! Polyline active & 4 min ETA */
-                <View style={styles.confirmedHeader}>
-                  <View style={styles.successBadge}>
-                    <CheckCircleIcon color="#10B981" />
-                    <Text style={styles.successBadgeText}>CHAUFFEUR EN ROUTE FOR KEYS</Text>
-                  </View>
-                  <Text style={styles.etaHeading}>Arriving at your car in 4 mins</Text>
-                  <Text style={styles.etaSubheading}>
-                    Live route active on radar • Ready to collect keys
-                  </Text>
-                </View>
               )}
 
-              {/* Scheduled Driver Dispatch / Departure Simulation Card */}
-              {bookingMode === 'schedule' && !isDriverDeparted && (
+              {/* Scheduled Booking Dispatch Notice */}
+              {bookingMode === 'schedule' && (
                 <View style={styles.dispatchNoticeCard}>
                   <View style={styles.dispatchNoticeRow}>
                     <Text style={styles.dispatchNoticeIcon}>🛵</Text>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.dispatchNoticeTitle}>Key Handover Telemetry</Text>
+                      <Text style={styles.dispatchNoticeTitle}>Key Handover at Pickup</Text>
                       <Text style={styles.dispatchNoticeBody}>
-                        Chauffeur departs 30 mins prior to pickup. Live radar route line will activate when driver marks departure.
+                        Chauffeur will arrive 30 mins before scheduled duty to collect keys with OTP. Live radar tracking activates on departure.
                       </Text>
                     </View>
                   </View>
-
-                  {/* Simulation Button for Demonstration / Interview Testing */}
-                  <TouchableOpacity
-                    style={styles.simulateDepartureBtn}
-                    onPress={departDriverForKeys}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.simulateDepartureText}>🛵 Simulate: Driver Departs for Keys</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {bookingMode === 'schedule' && isDriverDeparted && (
-                <View style={styles.departedActiveCard}>
-                  <View style={styles.liveSearchingDot} />
-                  <Text style={styles.departedActiveText}>
-                    Driver marked departure on 2-wheeler. Live route line active.
-                  </Text>
                 </View>
               )}
 
@@ -853,7 +821,7 @@ export const DriverBottomSheet: React.FC = () => {
 
               {/* Key Handover Security OTP */}
               <View style={styles.otpCard}>
-                <View>
+                <View style={styles.otpLeft}>
                   <Text style={styles.otpLabel}>KEY HANDOVER OTP</Text>
                   <Text style={styles.otpSublabel}>
                     {bookingMode === 'schedule'
@@ -861,7 +829,9 @@ export const DriverBottomSheet: React.FC = () => {
                       : 'Share with driver before handing over car keys'}
                   </Text>
                 </View>
-                <Text style={styles.otpCode}>4821</Text>
+                <View style={styles.otpBadge}>
+                  <Text style={styles.otpCode}>4821</Text>
+                </View>
               </View>
 
               {/* Cancel Button */}
@@ -1455,38 +1425,6 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     lineHeight: 16,
   },
-  simulateDepartureBtn: {
-    marginTop: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: '#0A84FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  simulateDepartureText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
-  departedActiveCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.25)',
-    marginBottom: 14,
-  },
-  departedActiveText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#10B981',
-    flex: 1,
-  },
   driverProfileCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1548,10 +1486,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     padding: 14,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
     marginBottom: 16,
+  },
+  otpLeft: {
+    flex: 1,
+    paddingRight: 14,
   },
   otpLabel: {
     fontSize: 10,
@@ -1563,9 +1505,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.textSecondary,
     marginTop: 2,
+    lineHeight: 16,
+  },
+  otpBadge: {
+    backgroundColor: 'rgba(10, 132, 255, 0.12)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(10, 132, 255, 0.3)',
   },
   otpCode: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '900',
     color: '#0A84FF',
     letterSpacing: 2,
