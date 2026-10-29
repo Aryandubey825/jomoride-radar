@@ -170,21 +170,64 @@ npm run ios
 
 ---
 
-## 📦 6. Local iOS `.ipa` Generation (Per Assignment Specification)
+## 📦 6. How to Generate Local Xcode `.ipa` Build (Step-by-Step)
 
-Per assignment instructions, the `.ipa` was compiled locally on a Mac using Xcode build tooling without cloud services.
+Per assignment instructions, **cloud builds (such as EAS Cloud) are strictly prohibited** and the `.ipa` must be generated locally using Xcode on a Mac. Below are the two standard methods to produce the build:
+
+### Method A: Via Xcode UI (Standard Native Workflow)
+1. **Open Workspace in Xcode:**
+   ```bash
+   cd ios && open JomoRide.xcworkspace
+   ```
+   *(Always open `.xcworkspace`, never `.xcodeproj`)*
+
+2. **Select Destination Device:**
+   * In Xcode's top toolbar device selector, choose **Any iOS Device (arm64)** (or your connected physical iPhone).
+
+3. **Configure Code Signing:**
+   * Select the root `JomoRide` project in the left Project Navigator.
+   * Under the **Signing & Capabilities** tab:
+     * Check **Automatically manage signing**.
+     * Select your Apple ID under **Team** (*Personal Team*).
+     * Set a unique Bundle Identifier (e.g. `com.aryanduve.jomoride`).
+
+4. **Create Archive:**
+   * From the macOS top menu bar, click **Product** > **Archive**.
+   * Xcode will compile the Release bundle and automatically open the **Organizer** window.
+
+5. **Export `.ipa`:**
+   * In the Organizer, select the latest archive and click **Distribute App** (blue button on right).
+   * Select **Development** (or **Custom** > **Ad Hoc** / **Development**).
+   * Keep default distribution options (App Thinning: None).
+   * Click **Export** and choose destination folder (e.g., Desktop). Xcode outputs `JomoRide.ipa`.
+
+---
+
+### Method B: Via Terminal CLI (Fast & Reproducible Native Build)
+To produce a clean, unencumbered local `.ipa` package directly from the command line using Xcode's native toolchain (`xcodebuild`):
 
 ```bash
 cd ios
-# 1. Compile Release build
-xcodebuild -workspace JomoRide.xcworkspace -scheme JomoRide -configuration Release -destination 'generic/platform=iOS' -derivedDataPath ./build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
-# 2. Package into .ipa
+# 1. Compile the Release build for generic arm64 iOS
+xcodebuild -workspace JomoRide.xcworkspace \
+  -scheme JomoRide \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  -derivedDataPath ./build \
+  CODE_SIGNING_ALLOWED=NO \
+  CODE_SIGNING_REQUIRED=NO
+
+# 2. Package the compiled .app into Apple's standard Payload structure
 mkdir -p ./build/Payload
 cp -r ./build/Build/Products/Release-iphoneos/JomoRide.app ./build/Payload/
-cd ./build && zip -r JomoRide.ipa Payload && mv JomoRide.ipa ~/Desktop/
+
+# 3. Zip into .ipa and move to Desktop
+cd ./build
+zip -r -q JomoRide.ipa Payload
+mv JomoRide.ipa ~/Desktop/
 ```
-The resulting `JomoRide.ipa` is available on the Desktop and attached to the submission.
+The resulting `JomoRide.ipa` (7.8 MB) is generated on the Desktop and attached to the submission.
 
 ---
 
